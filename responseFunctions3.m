@@ -1,4 +1,4 @@
-function out = responseFunctions2(pmodes,options)
+function out = responseFunctions3(pmodes,options)
 global wavenumbersToInvPs k_B_SI h c_SI
 k_B_cm_K = k_B_SI/h/c_SI/100;%k_B in cm-1/K 
 thermal_cutoff = 0.01;
@@ -6,8 +6,6 @@ T = 0;
 verbose = 0;
 
 out = [];
-n_sparse_states = estimateNSparseStates(pmodes,options);
-n_sparse_states = min(n_sparse_states,pmodes.NSTATES-2); 
 order = options.order;
 
 %canonical results
@@ -75,7 +73,7 @@ if isfield(options,'verbose')
     if isempty(options.verbose)
         verbose=0;
     else
-        verbose = 1;
+        verbose = options.w0;
     end
 end
 
@@ -114,30 +112,15 @@ for ii=1:length(f)
     eval(strcat(f{ii},'=pmodes.',f{ii},';'))
 end
 
+%
+% set up operators
+%
 if issparse(H_)
-    % calculate the eigenvectors of the coupled system
-    if verbose>=1,disp('calculate sparse eigenvalues'),end
-    [V,E]=eigs(H_,n_sparse_states,'SM');
-    E = diag(E);
-    if verbose>=1,disp('sort energies and vectors'),end
-    [E,ordering] = sort(E);
-    E = E - E(1); %remove zero point energy
-    V = V(:,ordering); %eigenvectors in input basis
     VV = speye(length(E),length(E)); %eigenvectors in eigenstate basis
 else
-    % calculate the eigenvectors of the coupled system
-    if verbose>=1,disp('calculate full eigenvalues'),end
-    [V,E]=eig(H_,'vector');
-    if verbose>=1,disp('sort energies and vectors'),end
-    [E,ordering] = sort(E);
-    E = E - E(1); %remove zero point energy
-    V = V(:,ordering); %eigenvectors in input basis
     VV = eye(size(V)); %eigenvectors in eigenstate basis
 end
 
-%
-% set up operators
-%  
 if verbose>=1,disp('set up operators'),end
 A0 = V'*A*V;
 C0 = V'*C*V;
